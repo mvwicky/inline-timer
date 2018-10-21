@@ -6,20 +6,18 @@ import sys
 from math import fabs
 
 try:
-    time.perf_counter
+    TIME_FUNC = time.perf_counter
 except AttributeError:
     TIME_FUNC = time.monotonic
-else:
-    TIME_FUNC = time.perf_counter
 
 # Default precision
-DEF_PREC = 4
+DEF_PRECISION = 4
 # Default time step
 DEF_STEP = 0.01
 
 
-def write_time(start_time, prec, step):
-    cur_time = '{0:.{1}f}'.format(fabs(TIME_FUNC() - start_time), prec)
+def write_time(start_time, precision, step):
+    cur_time = '{0:.{1}f}'.format(fabs(TIME_FUNC() - start_time), precision)
     sys.stdout.write(cur_time)
     sys.stdout.flush()
     time.sleep(step)
@@ -27,7 +25,7 @@ def write_time(start_time, prec, step):
 
 
 class InlineTimer(object):
-    def __init__(self, name=None, precision=DEF_PREC, step=DEF_STEP):
+    def __init__(self, name=None, precision=DEF_PRECISION, step=DEF_STEP):
         self.stop_event = None
         self.par_type = None
         self.par = None
@@ -61,26 +59,29 @@ class InlineTimer(object):
 
 
 class ProcessTimer(InlineTimer):
-    def __init__(self, name=None, precision=DEF_PREC, step=DEF_STEP):
+    def __init__(self, name=None, precision=DEF_PRECISION, step=DEF_STEP):
         super().__init__(name, precision, step)
         self.par_type = multiprocessing.Process
         self.stop_event = multiprocessing.Event()
 
 
 class ThreadTimer(InlineTimer):
-    def __init__(self, name=None, precision=DEF_PREC, step=DEF_STEP):
+    def __init__(self, name=None, precision=DEF_PRECISION, step=DEF_STEP):
         super().__init__(name, precision, step)
         self.par_type = threading.Thread
         self.stop_event = threading.Event()
 
 
-def process_timer(name=None, prec=DEF_PREC, step=DEF_STEP):
+def process_timer(name=None, prec=DEF_PRECISION, step=DEF_STEP):
     return ProcessTimer(name, prec, step)
 
 
-def thread_timer(name=None, prec=DEF_PREC, step=DEF_STEP):
+def thread_timer(name=None, prec=DEF_PRECISION, step=DEF_STEP):
     return ThreadTimer(name, prec, step)
 
 
-def inline_timer(mp=False):
-    pass
+def inline_timer(mp=False, **kwargs):
+    if mp:
+        return process_timer(**kwargs)
+    else:
+        return thread_timer(**kwargs)
